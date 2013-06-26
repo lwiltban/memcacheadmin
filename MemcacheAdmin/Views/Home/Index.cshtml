@@ -1,0 +1,15 @@
+﻿@{
+    ViewBag.Title = "MemcacheAdmin - Home Page";
+}
+@section featured {
+    <section class="featured">
+        <div class="content-wrapper">
+            <hgroup class="title">
+                <h2>@ViewBag.Message</h2>
+            </hgroup>
+            <p>
+                @Html.Partial("_ServersPartial")
+            </p>
+        </div>
+    </section>
+}

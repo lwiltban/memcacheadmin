@@ -1,0 +1,71 @@
+﻿@model MemcacheAdmin.Models.Items
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('td[columnid="name"]').mouseover(function () {
+            doLookup('name', this);
+        });
+
+        function isEmpty(str) {
+            return (!str || 0 === str.length);
+        }
+
+        function doLookup(lookupType, source) {
+            var src = $(source);
+            if (isEmpty(src.attr("title"))) {
+                $.ajax({
+                    url: '/Home/AjaxLookup',
+                    type: "POST",
+                    dataType: "json",
+                    data: { identifier: src.attr("id") }
+                }).done(function (data) {
+                    //set all common cells to have common title
+                    $("td[id='" + data.id + "']").attr("title", data.value);
+                });
+            }
+        }
+
+              
+    });
+</script>
+
+@if (Request.IsAuthenticated) {
+    <!-- <table>
+        <thead>
+            <tr>
+                <td class="head" columnid="Action" style="width: 25px;">Action</td>
+                <td class="head" columnid="Name" style="width: 25px;">Name</td>
+                <td class="head" columnid="Value" style="width: 25px;">Value</td>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach(var item in ViewBag.items)
+        {
+            <tr class="data" id="@item.Name">
+            <td columnid="action" id="@item.Name"><a href="#">delete</a></td>
+            <td columnid="name" id="@item.Name">@item.Name</td>
+            <td columnid="value"></td>
+            </tr>
+        }
+        </tbody>
+    </table> -->
+
+        var notFirst = false;
+
+        foreach(var item in ViewBag.items)
+        {
+            // Checking if first item
+            if(notFirst) { @Html.Raw("<hr/>"); }
+
+                <a class="green item" href="#">@item.Name</a>
+
+                <span class="right" style="clear:right;">
+                    <strong>Size</strong> :  @item.Size Bytes,
+                    <strong>Expiration</strong> :
+                    @item.Expiration
+                </span>
+
+            //# First item done
+            notFirst = true;
+        }
+} 

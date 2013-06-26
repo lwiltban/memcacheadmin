@@ -1,0 +1,96 @@
+﻿@model MemcacheAdmin.Models.ServersModel
+@{
+    ViewBag.Title = "Manage Servers";
+}
+
+<script>
+    $(document).ready(function () {
+        $(".edit").click(function () {
+            var id = $(this).parent();
+            doLookup($(this).attr('id'), id);
+        });
+        $(".delete").click(function ()
+        {
+            var id = $(this).parent();
+            doDelete($(this).attr('name'), id);
+
+        });
+
+        function isEmpty(str) {
+            return (!str || 0 === str.length);
+        }
+
+        function doDelete(key, src) {
+            if (!isEmpty(key)) {
+                $.ajax({
+                    url: '/Account/AjaxDelete',
+                    data: { 'serverId': src.attr("server"), 'key': key },
+                    type: "DELETE",
+                }).done(function (data) {
+                    //set all common cells to have common title
+                    if (data.code !== true)
+                        alert("Unable to delete key: " + data.id);
+                    else {
+                        $("tr[rowid='" + data.id + "']").remove();
+                    }
+                }).fail(function (data) {
+                    alert("Delete failed " + data);
+                });
+            }
+        }
+
+        function doLookup(key, src) {
+            if (!isEmpty(key)) {
+                $.ajax({
+                    url: '/Account/AjaxLookup',
+                    data: { 'serverId': src.attr("server"), 'slabId': src.attr("slab"), 'key': key },
+                    type: "POST",
+                }).done(function (data) {
+                    //set all common cells to have common title
+                    if (data.code !== true)
+                        alert("Unable to get key: " + data.id);
+                    else {
+                        alert(data.value);
+                    }
+                }).fail(function (data) {
+                    alert("Lookup failed " + data);
+                });
+            }
+        }
+
+    });
+</script>
+
+<hgroup class="title">
+    <h1>@ViewBag.Title.</h1>
+</hgroup>
+
+@if (Request.IsAuthenticated && Model.Servers != null)
+{
+
+    <table>
+        <tbody>
+            <a href="javascript:history.back()" >Back</a>
+            @if (Model.Servers != null)
+            {
+                <p>Current servers:</p>
+                foreach (var item in Model.Servers)
+                {
+                    var serverName = "/Home/Server/" + @item.Name;
+                    <tr rowid="@item.Name">
+                    <td server="@item.Name" name="@item.Name"><a class="edit" id="@item.Name" href="#"><strong>@item.Name</strong></a></td>
+                    <td server="@item.Name" name="@item.Name"><a class="delete" name="@item.Name">Delete</a></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <p>No items found</p>
+            }
+        </tbody>
+    </table>
+}
+    
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

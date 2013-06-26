@@ -1,0 +1,38 @@
+﻿@model MemcacheAdmin.Models.Server
+
+
+@if (Request.IsAuthenticated && ViewBag.Items != null) {
+
+<table>
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IPAddress)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Port)
+        </th>
+        <th></th>
+    </tr>
+
+</table>
+    
+        var notFirst = false;
+
+        foreach(var item in ViewBag.items)
+        {
+            // Checking if first item
+            if(notFirst) { @Html.Raw("<hr/>"); }
+
+            var serverName = "/Home/Server/" + @item.Name;
+                <a class="green item" href="@serverName">
+                    <span name="@item.IPAddress:@item.Port" class="right" style="clear:right;">
+                        <strong>@item.Name </strong>
+                    </span>
+                </a>
+            //# First item done
+            notFirst = true;
+        }
+} 

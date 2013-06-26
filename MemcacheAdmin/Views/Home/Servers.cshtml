@@ -1,0 +1,23 @@
+﻿@model MemcacheAdmin.Models.Server
+
+
+@if (Request.IsAuthenticated && ViewBag.Items != null) {
+
+        var notFirst = false;
+
+        foreach(var item in ViewBag.items)
+        {
+            // Checking if first item
+            if(notFirst) { @Html.Raw("<hr/>"); }
+
+            var serverName = "/Home/Server/" + @item.Name;
+                <a title="@item.IPAddress:@item.Port" class="green item" href="@serverName">
+                    <span class="right" style="clear:right;">
+                        <strong>@item.Name </strong>
+                    </span>
+                </a>
+            //# First item done
+            notFirst = true;
+        }
+
+} 

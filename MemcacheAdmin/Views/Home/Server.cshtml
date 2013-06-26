@@ -1,0 +1,36 @@
+﻿@model MemcacheAdmin.Models.Server
+@{
+    ViewBag.Title = "MemcacheAdmin Server";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (Request.IsAuthenticated) {
+
+        var notFirst = false;
+        <a href="javascript:history.back()" >Back</a>
+        if (ViewBag.Items != null)
+        {
+            <p>Slabs:</p>
+            foreach(var item in ViewBag.items)
+            {
+                // Checking if first item
+                if(notFirst) { @Html.Raw("<hr/>"); }
+
+                var slabName = "/Home/Slab/" + @Model.Name + "/" + @item.Value.Id;
+                    <a class="green item" href="@slabName"><strong>Slab @item.Value.Id</strong></a>
+
+                    <span class="right" style="clear:right;">
+                        Items <strong>@item.Value.Count </strong>
+                        Age <strong>@item.Value.Age</strong>
+                        Evicted <strong>@item.Value.Evicted </strong>
+                    </span>
+
+                //# First item done
+                notFirst = true;
+            }
+        }
+        else
+        {
+            <p>No slabs found</p>
+        }
+} 
