@@ -17,16 +17,21 @@ namespace MemcacheAdmin.Controllers
     {
         Dictionary<string, Server> _Servers;
         private ServerContext db = new ServerContext();
-        
+
         private void InitServers()
         {
             if (HttpContext.Cache.Get("Servers") == null)
             {
-                List<Server> Servers = db.Servers.ToList();
-                _Servers = new Dictionary<string, Server>();
-                foreach (Server server in Servers)
+                _Servers = new Dictionary<string, Models.Server>();
+                var serverLine = ConfigurationManager.AppSettings["MemcacheServers"];
+                string[] servers = serverLine.Split(',');
+                int index = 0;
+                foreach (string server in servers)
                 {
-                    _Servers.Add(server.Name, server);
+                    string[] address = server.Split(':');
+                    var name = string.Format("{0}", address[0]);
+                    var serverObj = new Server { ServerID = index++, Name = name, IPAddress = address[1], Port = Int32.Parse(address[2]) };
+                    _Servers.Add(name, serverObj);
                 }
                 HttpContext.Cache.Insert("Servers", _Servers, null, Cache.NoAbsoluteExpiration, new TimeSpan(0, 5, 0), CacheItemPriority.Default, null);
             }
@@ -35,23 +40,18 @@ namespace MemcacheAdmin.Controllers
                 _Servers = HttpContext.Cache.Get("Servers") as Dictionary<string, Server>;
             }
         }
-
+        
         public ActionResult Index()
         {
             HttpContext.Response.Redirect("/Home/Servers");
             ViewBag.Title = "MemcacheAdmin";
             ViewBag.Message = "Memcached Servers"; 
 
-            if (HttpContext.User.Identity.IsAuthenticated)
+            InitServers();
+            ViewBag.Items = new List<Server>();
+            foreach (KeyValuePair<string, Server> server in _Servers)
             {
-                InitServers();
-                ViewBag.Items = new List<Server>();
-                foreach (KeyValuePair<string, Server> server in _Servers)
-                {
-                    ViewBag.Items.Add(server.Value);
-                }
-                //Items items = new Items();
-                //ViewBag.Items = items.Load();
+                ViewBag.Items.Add(server.Value);
             }
             return View();
         }
@@ -66,26 +66,24 @@ namespace MemcacheAdmin.Controllers
         [HttpPost]
         public JsonResult AjaxLookup(string serverId, string slabId, string key)
         {
-            if (HttpContext.User.Identity.IsAuthenticated)
+            InitServers();
+            Server current = _Servers[serverId];
+            if (current != null)
             {
-                InitServers();
-                Server current = _Servers[serverId];
-                if (current != null)
+                var line = current.Get(key);
+                JsonResult result = new JsonResult()
                 {
-                    var line = current.Get(key);
-                    JsonResult result = new JsonResult()
+                    Data = new
                     {
-                        Data = new
-                        {
-                            id = key,
-                            value = line,
-                            code = line != null
-                        }
-                    };
-                    result.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
-                    return result;
-                }
+                        id = key,
+                        value = line,
+                        code = line != null
+                    }
+                };
+                result.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+                return result;
             }
+
             return null;
 
         }
@@ -93,24 +91,20 @@ namespace MemcacheAdmin.Controllers
         [HttpDelete]
         public JsonResult AjaxDelete(string serverId, string slabId, string key)
         {
-            if (HttpContext.User.Identity.IsAuthenticated)
+            InitServers();
+            Server current = _Servers[serverId];
+            if (current != null)
             {
-                InitServers();
-                Server current = _Servers[serverId];
-                if (current != null)
+                bool rc = current.Delete(key);
+                return new JsonResult()
                 {
-                    bool rc = current.Delete(key);
-                    return new JsonResult()
+                    Data = new
                     {
-                        Data = new
-                        {
-                            id = key,
-                            code = rc
-                        }
-                    };
-                }
+                        id = key,
+                        code = rc
+                    }
+                };
             }
-
             return null;
         }
 
@@ -119,16 +113,11 @@ namespace MemcacheAdmin.Controllers
             ViewBag.Title = "MemcacheAdmin";
             ViewBag.Message = "Memcached Servers";
 
-            if (HttpContext.User.Identity.IsAuthenticated)
+            InitServers();
+            ViewBag.Items = new List<Server>();
+            foreach (KeyValuePair<string, Server> server in _Servers)
             {
-                InitServers();
-                ViewBag.Items = new List<Server>();
-                foreach (KeyValuePair<string, Server> server in _Servers)
-                {
-                    ViewBag.Items.Add(server.Value);
-                }
-                //Items items = new Items();
-                //ViewBag.Items = items.Load();
+                ViewBag.Items.Add(server.Value);
             }
             return View();
         }
@@ -140,14 +129,11 @@ namespace MemcacheAdmin.Controllers
             Server current = null;
             try
             {
-                if (HttpContext.User.Identity.IsAuthenticated)
+                InitServers();
+                current = _Servers[id];
+                if (current != null && current.getSlabs())
                 {
-                    InitServers();
-                    current = _Servers[id];
-                    if (current != null && current.getSlabs())
-                    {
-                        ViewBag.Items = current.Slabs;
-                    }
+                    ViewBag.Items = current.Slabs;
                 }
             }
             catch (Exception ex)
@@ -164,16 +150,13 @@ namespace MemcacheAdmin.Controllers
             Slab slab = null;
             try
             {
-                if (HttpContext.User.Identity.IsAuthenticated)
+                InitServers();
+                Server current = _Servers[serverId];
+                if (current != null)
                 {
-                    InitServers();
-                    Server current = _Servers[serverId];
-                    if (current != null)
-                    {
-                        slab = current.Slabs[slabId];
-                        slab.getItems();
-                        ViewBag.Items = slab.Items;
-                    }
+                    slab = current.Slabs[slabId];
+                    slab.getItems();
+                    ViewBag.Items = slab.Items;
                 }
             }
             catch (Exception ex)
